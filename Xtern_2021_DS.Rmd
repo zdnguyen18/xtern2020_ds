@@ -20,7 +20,7 @@ Drawing histogram and boxplot for each continuos varibales including: Latitude, 
 Conclusion 1: From the graphs, the range of Latitude is from 39.25 to 39.75 while the range of Longitude is from -85.75 to -85.25
 ```{r}
 #Main database having 2019 observations
-FoodieX <- read_csv("Class_2021-XTern-DS.csv")
+FoodieX <- read_csv("2020-XTern-DS.csv")
 str(FoodieX)
 summary(FoodieX)
 #Latitude
