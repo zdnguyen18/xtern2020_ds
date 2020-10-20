@@ -1,0 +1,90 @@
+---
+title: "Xtern Class of 2021_Data Science Assessment"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+1. Install packages to clean data in csv file
+```{r}
+install.packages("tidyverse")
+install.packages("dplyr")
+library(dplyr)
+library(tidyverse)
+library(readr)
+```
+DATA OVERVIEW - Pickup Zones Conlcusion
+Overall about the data structure of the csv
+Drawing histogram and boxplot for each continuos varibales including: Latitude, Longitude
+Conclusion 1: From the graphs, the range of Latitude is from 39.25 to 39.75 while the range of Longitude is from -85.75 to -85.25
+```{r}
+#Main database having 2019 observations
+FoodieX <- read_csv("/Users/winnie/desktop/Class_2021-XTern-DS.csv")
+str(FoodieX)
+summary(FoodieX)
+#Latitude
+ggplot(FoodieX, aes(x=Latitude)) + geom_histogram(bins =50,aes(y=..density..)) +geom_density()
+ggplot(FoodieX, aes(x=Latitude)) + geom_boxplot() + coord_flip() + theme_classic()
+#Longtitude 
+ggplot(FoodieX, aes(x=Longitude)) + geom_histogram(bins =50,aes(y=..density..)) +geom_density()
+ggplot(FoodieX, aes(x=Longitude)) + geom_boxplot() + coord_flip() + theme_classic()
+#Interactive grpah between numeric vcariables
+GPS <- FoodieX[,c('Latitude', 'Longitude')]
+cor(GPS)
+pairs(GPS[,c(1:2)])
+```
+Convert Data
+Convert all character columns into numeric columns except for Restaurant (ID) & Cuisines.However, there are lots of cell with NA data which leads to the next action: filter and get rid of NA data row (this non-NA dataset is used for Model 1 below)
+
+```{r}
+FoodieX$Rating <- as.numeric(as.character(FoodieX$Rating))
+FoodieX$Votes <- as.numeric(as.character(FoodieX$Votes))
+FoodieX$Reviews <- as.numeric(as.character(FoodieX$Reviews))
+trending <- FoodieX[,c('Cuisines','Rating', 'Votes', 'Reviews')]
+na_vec <- which(!complete.cases(trending))
+#Create a dataset without NA data
+model1_data <- trending[-na_vec,]
+```
+Model 1: Regression between Rating (dependent variable) & Votes + Review (Independent Variables)
+Conclusion 2: As we see the adjusted R-squared, only 18% of Ratings is explained by Votes & Reviews. Therefore, the correlation among rating, votes and reviews is insignificant.
+When we do single linear regression for (Rating & Votes) or (Rating & Reviews), the adjusted R-squares are also lower than 20% -> cannot state the regression
+```{r}
+model1 <- lm(Rating ~ Votes+Reviews, data = model1_data)
+summary(model1)
+model1_2 <- lm(Rating ~ Reviews, data = model1_data)
+summary(model1_2)
+model1_3 <- lm(Rating ~ Votes, data = model1_data)
+summary(model1_3)
+```
+
+Conclusion 3: Best Rating Restaurants (4.0 rating)
++ There are a total 112 restaurants which have a maximum rating of 4.0. Out of 2019 restaurants in the original dataset,  this number accounts for 5%. 
++ Among 112 restaurants with 4.0 rating, restaurants serving Indian food account for 35 % (39 restaurants), restaurants serving Chinese food account for 25% (28 restaurants).
+
+Conclusion 4: The popularity of Indian & Chinese Cuisine in Indianapolis
+All in all, we can say, Indian and Chinese cuisine are the two main parts of Indianapolis restaurant type, accounting for 16.8% and 12.5% of restaurants in Indy (in total). 10% out of each cuisine restaurant serves high quality food and has good customer service as they have 4.0 (maximum) rating.
+Conclusion 4.1: Indian Cuisine
++ There are 339 restaurants serving Indian food in Indianapolis (out of 2019 restaurants). However, we only have 39 high quality (rate 4.0) restaurants accounting for only 11.5%
+Conclusion 4.2: Chinese Cuisine
++ There are 252 restaurants serving Chinese food in Indianapolis (out of 2019 restaurants). However, we only have 28 high quality (rate 4.0) restaurants accounting for only 11.1%
+```{r}
+#Total number of high rate (4.0) restaurants in Indianapolis
+high_rate <- filter(model1_data,Rating==4.0)
+#Total number of Indian restaurants which has 4.0 rating in Indianapolis
+Indian_high_quality <- high_rate %>% select(Cuisines, Votes) %>% filter(str_detect(Cuisines, "Indian")) %>%
+  count(Cuisines)
+#Total number of Indian restaurants in Indianapolis
+Indian_total <- FoodieX %>% select(Cuisines) %>% filter(str_detect(Cuisines, "Indian")) %>%count(Cuisines)
+#Total number of Chinese restaurants in Indianapolis
+Chinese_total <- FoodieX %>% select(Cuisines) %>% filter(str_detect(Cuisines, "Chinese")) %>%count(Cuisines)
+#Total number of Chinese restaurants which has 4.0 rating in Indianapolis
+Chinese_high_quality <- high_rate %>% select(Cuisines, Votes) %>% filter(str_detect(Cuisines, "Chinese")) %>% count(Cuisines)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
